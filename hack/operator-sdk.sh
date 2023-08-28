@@ -26,7 +26,7 @@ case ${GOOS} in
     ;;
 esac
 
-if [ "$GOARCH" != "amd64" ]; then
+if [ "$GOARCH" != "amd64" && "$GOARCH" != "ppc64le" ]; then
   echo "Unsupported architecture $GOARCH"
   exit 1
 fi
