@@ -4,4 +4,4 @@ metadata:
   name: cert-manager-operator
 spec:
   sourceType: grpc
-  image: quay.io/jcho0/cert-manager-operator-index:1.0.0
+  image: quay.io/jcho0/cert-manager-operator-index:1.11.1
