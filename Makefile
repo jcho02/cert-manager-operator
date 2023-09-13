@@ -105,6 +105,11 @@ E2E_TIMEOUT ?= 1h
 
 MANIFEST_SOURCE = https://github.com/cert-manager/cert-manager/releases/download/v1.12.3/cert-manager.yaml
 
+AMD64_MANIFEST = skopeo inspect --raw  $(CONTAINER_ENGINE)://$(BUNDLE_IMG) | \
+               jq -r '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux").digest'
+
+PPC64LE_MANIFEST = skopeo inspect --raw  $(CONTAINER_ENGINE)://$(BUNDLE_IMG) | \
+               jq -r '.manifests[] | select(.platform.architecture == "ppc64le" and .platform.os == "linux").digest'
 
 ##@ Development
 
@@ -192,6 +197,9 @@ image-build: ## Build container image with the operator.
 image-push: ## Push container image with the operator.
 	$(CONTAINER_ENGINE) push ${IMG} ${CONTAINER_PUSH_ARGS}
 
+image-build-multi-arch: ## Build multi-arch container image with the operator.
+	$(CONTAINER_ENGINE) buildx build --push --platform linux/amd64,linux/ppc64le -t $(IMG) .
+
 ##@ Deployment
 
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
@@ -216,6 +224,10 @@ bundle-image-build: bundle
 bundle-image-push:
 	$(CONTAINER_ENGINE) push ${BUNDLE_IMG}
 
+.PHONY: bundle-image-build-multi-arch
+bundle-image-build-multi-arch:
+	$(CONTAINER_ENGINE) buildx build --push --platform linux/amd64,linux/ppc64le -t $(BUNDLE_IMG) -f bundle.Dockerfile .
+
 .PHONY: index-image-build
 index-image-build: opm
 	$(OPM) index add -c $(CONTAINER_ENGINE) --bundles ${BUNDLE_IMG} --tag ${INDEX_IMG}
@@ -223,6 +235,20 @@ index-image-build: opm
 .PHONY: index-image-push
 index-image-push:
 	$(CONTAINER_ENGINE) push ${INDEX_IMG}
+
+.PHONY: index-image-build-multi-arch
+index-image-build-multi-arch: opm
+	$(OPM) index add -c $(CONTAINER_ENGINE) --bundles $(BUNDLE_IMG)@$(AMD64_DIGEST) --tag $(INDEX_IMG)-amd64
+	$(OPM) index add -c $(CONTAINER_ENGINE) --bundles $(BUNDLE_IMG)@$(PPC64LE_DIGEST) --tag $(INDEX_IMG)-ppc64le
+
+.PHONY: index-image-push-multi-arch
+index-image-push-multi-arch:
+	$(CONTAINER_ENGINE) push $(INDEX_IMG)-amd64
+	$(CONTAINER_ENGINE) push $(INDEX_IMG)-ppc64le
+	$(CONTAINER_ENGINE) manifest create --amend $(INDEX_IMG) \
+		$(INDEX_IMG)-amd64 \
+		$(INDEX_IMG)-ppc64le
+	$(CONTAINER_ENGINE) manifest push $(INDEX_IMG)
 
 OPM=$(BIN_DIR)/opm
 opm: ## Download opm locally if necessary.
