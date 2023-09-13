@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
 # builds the operator and its OLM catalog index and pushes it to quay.io.
 #
-# by default, the built catalog index is tagged with
-# `quay.io/projectquay/quay-operator-index:3.6-unstable`. you can override the
-# tag alone by exporting TAG before executing this script.
-#
-# To push to your own registry, override the REGISTRY and NAMESPACE env vars,
+# To push to your own registry, enter your own image inputs
 # i.e:
-#   $ REGISTRY=quay.io NAMESPACE=yourusername ./hack/build.sh
+#   $ IMG=quay.io/${repo}/cert-manager-operator BUNDLE_IMG=quay.io/${repo}/cert-manager-operator-bundle INDEX_IMG=quay.io/${repo}/cert-manager-operator-index ./hack/build.sh
 #
 # REQUIREMENTS:
 #  * a valid login session to a container registry.
@@ -24,33 +20,18 @@
 # this means that if you made any changes to them and want them to be persisted,
 # make sure to commit them before running this script.
 set -e
+function multi-arch() {
+	make image-build-multi-arch IMG=$1
+	make bundle IMG=$1
+	make bundle-image-build-multi-arch BUNDLE_IMG=$2
+	make index-image-build-multi-arch BUNDLE_IMG=$2 INDEX_IMG=$3
+	make index-image-push-multi-arch INDEX_IMG=$3
 
-function cleanup {
-	# shellcheck disable=SC2046
-	if [ -x $(command -v git >/dev/null 2>&1) ]; then
-		git checkout "${CSV_PATH}" >/dev/null 2>&1
-		git checkout "${ANNOTATIONS_PATH}" >/dev/null 2>&1
-	fi
 }
 
-trap cleanup EXIT
-
-# prints pre-formatted info output.
-function info {
-	echo "INFO $(date '+%Y-%m-%dT%H:%M:%S') $*"
+main() {
+	multi-arch $1 $2 $3
+	return $?
 }
 
-# prints pre-formatted error output.
-function error {
-	>&2 echo "ERROR $(date '+%Y-%m-%dT%H:%M:%S') $*"
-}
-
-function digest() {
-	declare -n ret=$2
-	IMAGE=$1
-	docker pull "${IMAGE}"
-	# shellcheck disable=SC2034
-	ret=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
-}
-
-make 
+main "$@"
