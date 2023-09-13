@@ -210,7 +210,7 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Security
     console.openshift.io/disable-operand-delete: "true"
-    containerImage: quay.io/jcho0/cert-manager-operator:1.11.1
+    containerImage: placeholder
     createdAt: 2023-03-03T00:00:00
     olm.skipRange: '>=1.11.4 <1.12.0'
     operator.openshift.io/uninstall-message: The cert-manager Operator for Red Hat
@@ -661,7 +661,7 @@ spec:
                   value: "2"
                 - name: TRUSTED_CA_CONFIGMAP_NAME
                 - name: CLOUD_CREDENTIALS_SECRET_NAME
-                image: quay.io/jcho0/cert-manager-operator:1.11.1
+                image: placeholder
                 imagePullPolicy: Always
                 name: cert-manager-operator
                 resources:
