@@ -93,6 +93,9 @@ BUNDLE_IMG ?= olm-bundle:latest
 INDEX_IMG ?= olm-bundle-index:latest
 OPM_VERSION ?= v1.23.0
 
+AMD64_DIGEST ?= latest
+PPC64LE_DIGEST ?= latest
+
 GOLANGCI_LINT_BIN=$(BIN_DIR)/golangci-lint
 
 OPERATOR_SDK_BIN=$(BIN_DIR)/operator-sdk
@@ -104,12 +107,6 @@ GOBUILD_VERSION_ARGS = -ldflags "-X $(PACKAGE)/pkg/version.SHORTCOMMIT=$(SHORTCO
 E2E_TIMEOUT ?= 1h
 
 MANIFEST_SOURCE = https://github.com/cert-manager/cert-manager/releases/download/v1.12.3/cert-manager.yaml
-
-AMD64_MANIFEST = skopeo inspect --raw  $(CONTAINER_ENGINE)://$(BUNDLE_IMG) | \
-               jq -r '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux").digest'
-
-PPC64LE_MANIFEST = skopeo inspect --raw  $(CONTAINER_ENGINE)://$(BUNDLE_IMG) | \
-               jq -r '.manifests[] | select(.platform.architecture == "ppc64le" and .platform.os == "linux").digest'
 
 ##@ Development
 
@@ -252,7 +249,7 @@ index-image-push-multi-arch:
 
 OPM=$(BIN_DIR)/opm
 opm: ## Download opm locally if necessary.
-	$(call get-bin,$(OPM),$(BIN_DIR),https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/linux-amd64-opm)
+	$(call get-bin,$(OPM),$(BIN_DIR),https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/linux-ppc64le-opm)
 
 define get-bin
 @[ -f "$(1)" ] || { \

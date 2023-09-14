@@ -24,7 +24,11 @@ function multi-arch() {
 	make image-build-multi-arch IMG=$1
 	make bundle IMG=$1
 	make bundle-image-build-multi-arch BUNDLE_IMG=$2
-	make index-image-build-multi-arch BUNDLE_IMG=$2 INDEX_IMG=$3
+	declare -r AMD64_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/cert-manager-operator-bundle:${TAG} | \
+               jq -r '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux").digest')
+	delcare -r POWER_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/cert-manager-operator-bundle:${TAG} | \
+               jq -r '.manifests[] | select(.platform.architecture == "ppc64le" and .platform.os == "linux").digest')
+	make index-image-build-multi-arch BUNDLE_IMG=$2 INDEX_IMG=$3 AMD64_DIGEST=$(AMD64_DIGEST) PPC64LE_DIGEST=$(PPC64LE_DIGEST)
 	make index-image-push-multi-arch INDEX_IMG=$3
 
 }
